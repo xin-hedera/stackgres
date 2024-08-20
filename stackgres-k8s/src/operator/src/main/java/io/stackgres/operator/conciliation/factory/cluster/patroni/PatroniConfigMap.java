@@ -111,7 +111,7 @@ public class PatroniConfigMap implements VolumeFactory<StackGresClusterContext> 
         .orElse("60"));
     data.put("PATRONI_POSTGRESQL_LISTEN", "127.0.0.1:" + EnvoyUtil.PG_PORT);
     data.put("PATRONI_POSTGRESQL_CONNECT_ADDRESS",
-        "${POD_IP}:" + EnvoyUtil.PG_REPL_ENTRY_PORT);
+        "${POD_IP}:" + EnvoyUtil.PG_ENTRY_PORT);
 
     data.put("PATRONI_RESTAPI_LISTEN", "0.0.0.0:" + EnvoyUtil.PATRONI_PORT);
     data.put("PATRONI_POSTGRESQL_DATA_DIR", ClusterPath.PG_DATA_PATH.path());
