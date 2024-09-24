@@ -2,7 +2,7 @@
 
 set -e
 
-BASE_IMAGE="registry.access.redhat.com/ubi8-minimal:8.7-1085"
+BASE_IMAGE="registry.access.redhat.com/ubi9-minimal:9.4-1194"
 
 OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-"stackgres/operator:main"}"
 TARGET_OPERATOR_IMAGE_NAME="${TARGET_OPERATOR_IMAGE_NAME:-$OPERATOR_IMAGE_NAME}"
