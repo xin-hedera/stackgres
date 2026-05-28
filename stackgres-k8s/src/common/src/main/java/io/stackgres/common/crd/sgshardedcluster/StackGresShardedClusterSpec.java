@@ -80,6 +80,8 @@ public class StackGresShardedClusterSpec {
   @Valid
   private StackGresShardedClusterReplicateFrom replicateFrom;
 
+  private Boolean enableInternalNodePooler;
+
   @Valid
   private StackGresClusterNonProduction nonProductionOptions;
 
@@ -254,6 +256,14 @@ public class StackGresShardedClusterSpec {
     this.replicateFrom = replicateFrom;
   }
 
+  public Boolean getEnableInternalNodePooler() {
+    return enableInternalNodePooler;
+  }
+
+  public void setEnableInternalNodePooler(Boolean enableInternalNodePooler) {
+    this.enableInternalNodePooler = enableInternalNodePooler;
+  }
+
   public StackGresClusterNonProduction getNonProductionOptions() {
     return nonProductionOptions;
   }
@@ -264,9 +274,9 @@ public class StackGresShardedClusterSpec {
 
   @Override
   public int hashCode() {
-    return Objects.hash(configurations, coordinator, database, distributedLogs, initialData,
-        metadata, nonProductionOptions, postgres, postgresServices, profile, replicateFrom,
-        replication, shards, type);
+    return Objects.hash(configurations, coordinator, database, distributedLogs,
+        enableInternalNodePooler, initialData, metadata, nonProductionOptions, postgres,
+        postgresServices, profile, replicateFrom, replication, shards, type);
   }
 
   @Override
@@ -282,6 +292,7 @@ public class StackGresShardedClusterSpec {
         && Objects.equals(coordinator, other.coordinator)
         && Objects.equals(database, other.database)
         && Objects.equals(distributedLogs, other.distributedLogs)
+        && Objects.equals(enableInternalNodePooler, other.enableInternalNodePooler)
         && Objects.equals(initialData, other.initialData)
         && Objects.equals(metadata, other.metadata)
         && Objects.equals(nonProductionOptions, other.nonProductionOptions)

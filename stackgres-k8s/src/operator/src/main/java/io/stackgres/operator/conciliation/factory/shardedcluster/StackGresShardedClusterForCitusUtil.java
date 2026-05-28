@@ -15,6 +15,7 @@ import com.google.common.io.Resources;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.stackgres.common.EnvoyUtil;
 import io.stackgres.common.StackGresShardedClusterUtil;
 import io.stackgres.common.crd.sgcluster.StackGresCluster;
 import io.stackgres.common.crd.sgcluster.StackGresClusterConfigurations;
@@ -23,6 +24,7 @@ import io.stackgres.common.crd.sgcluster.StackGresClusterManagedScriptEntryBuild
 import io.stackgres.common.crd.sgcluster.StackGresClusterManagedSql;
 import io.stackgres.common.crd.sgcluster.StackGresClusterPatroni;
 import io.stackgres.common.crd.sgcluster.StackGresClusterPatroniConfig;
+import io.stackgres.common.crd.sgcluster.StackGresClusterPods;
 import io.stackgres.common.crd.sgcluster.StackGresClusterSpec;
 import io.stackgres.common.crd.sgcluster.StackGresClusterSpecLabels;
 import io.stackgres.common.crd.sgpgconfig.StackGresPostgresConfig;
@@ -32,6 +34,7 @@ import io.stackgres.common.crd.sgscript.StackGresScriptBuilder;
 import io.stackgres.common.crd.sgscript.StackGresScriptEntry;
 import io.stackgres.common.crd.sgscript.StackGresScriptEntryBuilder;
 import io.stackgres.common.crd.sgshardedcluster.StackGresShardedCluster;
+import io.stackgres.common.crd.sgshardedcluster.StackGresShardedClusterCoordinator;
 import io.stackgres.common.crd.sgshardedcluster.StackGresShardedClusterShard;
 import io.stackgres.common.crd.sgshardedcluster.StackGresShardedClusterSpec;
 import io.stackgres.common.crd.sgshardedcluster.StackGresShardedClusterSpecLabels;
@@ -236,6 +239,10 @@ public interface StackGresShardedClusterForCitusUtil extends StackGresShardedClu
       StackGresShardedClusterContext context) {
     StackGresShardedCluster cluster = context.getShardedCluster();
     var superuserCredentials = ShardedClusterSecret.getSuperuserCredentials(context);
+    String authinfo = "password=" + DSL.inline(superuserCredentials.v2);
+    if (Boolean.TRUE.equals(cluster.getSpec().getEnableInternalNodePooler())) {
+      authinfo = "port=" + getInternalNodePoolerPort(cluster) + " " + authinfo;
+    }
     final Secret secret = new SecretBuilder()
         .withNewMetadata()
         .withNamespace(cluster.getMetadata().getNamespace())
@@ -248,9 +255,28 @@ public interface StackGresShardedClusterForCitusUtil extends StackGresShardedClu
                     StandardCharsets.UTF_8)
                 .read()).get().formatted(
                     DSL.inline(superuserCredentials.v1),
-                    DSL.inline("password=" + DSL.inline(superuserCredentials.v2))))))
+                    DSL.inline(authinfo)))))
         .build();
     return secret;
+  }
+
+  /**
+   * Return the port used by internal Citus nodes to reach each other through the connection
+   * pooler. The streaming replication protocol between primaries and replicas inside a group is
+   * unaffected because Patroni manages {@code primary_conninfo} independently from
+   * {@code pg_dist_authinfo}.
+   *
+   * <p>libpq accepts duplicate keywords in a conninfo string and honors the last occurrence,
+   * so prepending {@code port=<pooler_port>} to {@code pg_dist_authinfo.authinfo} overrides the
+   * value patroni publishes in {@code pg_dist_node.nodeport}.
+   */
+  static int getInternalNodePoolerPort(StackGresShardedCluster cluster) {
+    boolean envoyDisabled = Optional.of(cluster.getSpec())
+        .map(StackGresShardedClusterSpec::getCoordinator)
+        .map(StackGresShardedClusterCoordinator::getPods)
+        .map(StackGresClusterPods::getDisableEnvoy)
+        .orElse(false);
+    return envoyDisabled ? EnvoyUtil.PG_POOL_PORT : EnvoyUtil.PG_ENTRY_PORT;
   }
 
   static String getUpdateShardsSecretName(StackGresShardedCluster cluster) {

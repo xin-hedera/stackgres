@@ -124,6 +124,17 @@ spec:
                 type: string
                 description: |
                   The database name that will be created and used across all node and where "partitioned" (distributed) tables will live in.
+              enableInternalNodePooler:
+                type: boolean
+                default: false
+                description: |
+                  When set to `true`, internal node-to-node connections (for example Citus coordinator-to-worker queries) are routed through the PgBouncer connection pooler running on each pod instead of going directly to Postgres on port 5432.
+
+                  The streaming replication protocol between the primary and replicas of a group is not routed through PgBouncer and keeps using a direct Postgres connection, so replication is unaffected.
+
+                  This field only applies when `.spec.type` is `citus`. For other sharding types it is ignored.
+
+                  Requires connection pooling to be enabled (`.spec.coordinator.pods.disableConnectionPooling` and `.spec.shards.pods.disableConnectionPooling` must not be set to `true`).
               postgres:
                 type: object
                 description: |

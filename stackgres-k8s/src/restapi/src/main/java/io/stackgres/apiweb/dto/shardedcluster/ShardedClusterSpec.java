@@ -40,6 +40,8 @@ public class ShardedClusterSpec {
 
   private ShardedClusterInitalData initialData;
 
+  private Boolean enableInternalNodePooler;
+
   private ClusterNonProductionOptions nonProductionOptions;
 
   public String getProfile() {
@@ -144,6 +146,14 @@ public class ShardedClusterSpec {
 
   public void setInitialData(ShardedClusterInitalData initialData) {
     this.initialData = initialData;
+  }
+
+  public Boolean getEnableInternalNodePooler() {
+    return enableInternalNodePooler;
+  }
+
+  public void setEnableInternalNodePooler(Boolean enableInternalNodePooler) {
+    this.enableInternalNodePooler = enableInternalNodePooler;
   }
 
   @Override
