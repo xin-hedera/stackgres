@@ -22,9 +22,13 @@ import io.stackgres.operatorframework.admissionwebhook.AdmissionReview;
 import io.stackgres.operatorframework.admissionwebhook.Operation;
 import io.stackgres.operatorframework.admissionwebhook.validating.ValidationFailed;
 import io.stackgres.operatorframework.admissionwebhook.validating.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class PersistentVolumeSizeExpansionValidator<T extends AdmissionReview<R>,
     R extends CustomResource<?, ?>> implements Validator<T> {
+
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final boolean clusterRoleDisabled = OperatorProperty.CLUSTER_ROLE_DISABLED.getBoolean();
 
@@ -32,8 +36,10 @@ public abstract class PersistentVolumeSizeExpansionValidator<T extends Admission
   public void validate(T review) throws ValidationFailed {
     if (isOperationUpdate(review) && compareVolumeSizes(review) != 0) {
       if (compareVolumeSizes(review) < 0) {
-        // At the moment we can't decrease volume sizes
-        throwValidationError("Decrease of persistent volume size is not supported");
+        logger.warn("Ignoring persistent volume size decrease from {} to {}",
+            getVolumeSize(review.getRequest().getOldObject()),
+            getVolumeSize(review.getRequest().getObject()));
+        return;
       }
 
       //If we are here is because the persistent volume size is being increased
